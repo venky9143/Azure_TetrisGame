@@ -2,6 +2,7 @@ trigger:
   branches:
     include:
       - main
+
 pool:
   vmImage: 'ubuntu-latest'
 
@@ -20,34 +21,35 @@ stages:
       - job: 'TerraformJob'
         displayName: 'Terraform Apply'
         steps:
-         - script: |
-              curl -L -o terraform.zip https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
-              unzip terraform.zip
-              sudo mv terraform /usr/local/bin/
-              terraform --version
-           displayName: "Install Terraform Manually"
 
-         - task: AzureCLI@2
-           displayName: "Run Azure CLI Script"
-           inputs:
-                 azureSubscription: 'Azure-Tetris-ServiceConnection'
-                 scriptType: 'bash'
-                 scriptLocation: 'inlineScript'
-                 inlineScript: |
-                      echo "Azure CLI Task Running..."
-                      az account show
+        # Install Terraform
+        - script: |
+            curl -L -o terraform.zip https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
+            unzip terraform.zip
+            sudo mv terraform /usr/local/bin/
+            terraform --version
+          displayName: "Install Terraform Manually"
 
+        # AzureCLI Task – includes Terraform
+        - task: AzureCLI@2
+          displayName: "Terraform Init & Plan"
+          inputs:
+            azureSubscription: 'Azure-Tetris-ServiceConnection'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              echo "Logged into Azure"
+              az account show
 
-         - script: |
+              echo "Exporting Terraform ARM_* variables"
+              export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+              export ARM_TENANT_ID=$(az account show --query tenantId -o tsv)
+              export ARM_CLIENT_ID=$servicePrincipalId
+              export ARM_CLIENT_SECRET=$servicePrincipalKey
+
+              cd IAC_Terraform
+
               terraform init
-           displayName: 'Terraform Init'
-           workingDirectory: 'IAC_Terraform'
-
-         - script: |
               terraform fmt
               terraform validate
-              terraform plan 
-           displayName: 'Terraform Plan'
-           workingDirectory: 'IAC_Terraform'
-
-
+              terraform plan
