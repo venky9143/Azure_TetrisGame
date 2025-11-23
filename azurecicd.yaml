@@ -26,6 +26,15 @@ stages:
               sudo mv terraform /usr/local/bin/
               terraform --version
            displayName: "Install Terraform Manually"
+
+         - task: AzureCLI@2
+           inputs:
+                 azureSubscription: 'Azure-Tetris-ServiceConnection'
+                 scriptType: 'batch'
+                 scriptLocation: 'inlineScript'
+                 inlineScript: 'echo "Hello from Azure CLI"'
+
+
          - script: |
               terraform init
            displayName: 'Terraform Init'
