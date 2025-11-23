@@ -20,11 +20,6 @@ stages:
       - job: 'TerraformJob'
         displayName: 'Terraform Apply'
         steps:
-          - task: TerraformInstaller@1
-            displayName: 'Install Terraform'
-            inputs:
-              terraformVersion: '1.5.7'
-
           - script: |
               terraform init
             displayName: 'Terraform Init'
@@ -34,39 +29,3 @@ stages:
               terraform apply -auto-approve -var="cluster_name=$(aksClusterName)" -var="node_count=$(aksNodeCount)" -var="acr_name=$(acrName)" -var="node_size=$(aksNodeSize)"
             displayName: 'Terraform Apply'
             workingDirectory: 'IAC_Terraform'
-  - stage: 'pull the image'
-    displayName: 'Pull the image from DockerHub'
-    dependsOn: 'DeployInfrastructure'
-    jobs:
-      - job: 'PullImageJob'
-        displayName: 'Pull Image from DockerHub'
-        steps:
-          - script: |
-              echo "Pulling image from DockerHub..."
-              docker login -u $(dockerHubUsername) -p $(dockerHubPassword)
-              docker pull $(dockerHubUsername)/tetris:latest
-              docker images
-              echo "Image pulled successfully."
-
-              echo Tagging and pushing to Azure Container Registry...
-              az acr login --name $(acrName)
-              docker tag $(dockerHubUsername)/tetris:latest $(acrName).azurecr.io/tetris:latest
-              docker push $(acrName).azurecr.io/tetris:latest
-            displayName: 'Pull Image'
-  - stage: 'Deploy to AKS'
-    displayName: 'Deploy Application to AKS'
-    dependsOn: 'pull the image'
-    jobs:
-      - job: 'DeployToAKSJob'
-        displayName: 'Deploy to AKS'
-        steps:
-          - script: |
-              echo "Getting AKS credentials..."
-              az aks get-credentials --resource-group tetris-rg --name $(aksClusterName)
-
-              echo "Deploying application to AKS..."
-              kubectl apply -f k8s/deployment.yaml
-              kubectl apply -f k8s/service.yaml
-
-              echo "Deployment completed."
-            displayName: 'Deploy to AKS'
