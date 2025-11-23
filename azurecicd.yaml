@@ -32,7 +32,9 @@ stages:
            workingDirectory: 'IAC_Terraform'
 
          - script: |
-              terraform apply -auto-approve -var="cluster_name=$(aksClusterName)" -var="node_count=$(aksNodeCount)" -var="acr_name=$(acrName)" -var="node_size=$(aksNodeSize)"
+              terraform fmt
+              terraform validate
+              terrafrom plan 
            displayName: 'Terraform Apply'
            workingDirectory: 'IAC_Terraform'
 
