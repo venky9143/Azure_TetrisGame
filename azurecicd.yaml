@@ -20,12 +20,20 @@ stages:
       - job: 'TerraformJob'
         displayName: 'Terraform Apply'
         steps:
-          - script: |
+         - script: |
+              curl -L -o terraform.zip https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
+              unzip terraform.zip
+              sudo mv terraform /usr/local/bin/
+              terraform --version
+              displayName: "Install Terraform Manually"
+         - script: |
               terraform init
-            displayName: 'Terraform Init'
-            workingDirectory: 'IAC_Terraform'
+           displayName: 'Terraform Init'
+           workingDirectory: 'IAC_Terraform'
 
-          - script: |
+         - script: |
               terraform apply -auto-approve -var="cluster_name=$(aksClusterName)" -var="node_count=$(aksNodeCount)" -var="acr_name=$(acrName)" -var="node_size=$(aksNodeSize)"
-            displayName: 'Terraform Apply'
-            workingDirectory: 'IAC_Terraform'
+           displayName: 'Terraform Apply'
+           workingDirectory: 'IAC_Terraform'
+
+
