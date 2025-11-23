@@ -25,7 +25,7 @@ stages:
               unzip terraform.zip
               sudo mv terraform /usr/local/bin/
               terraform --version
-              displayName: "Install Terraform Manually"
+           displayName: "Install Terraform Manually"
          - script: |
               terraform init
            displayName: 'Terraform Init'
