@@ -28,11 +28,14 @@ stages:
            displayName: "Install Terraform Manually"
 
          - task: AzureCLI@2
+           displayName: "Run Azure CLI Script"
            inputs:
                  azureSubscription: 'Azure-Tetris-ServiceConnection'
-                 scriptType: 'batch'
+                 scriptType: 'bash'
                  scriptLocation: 'inlineScript'
-                 inlineScript: 'echo "Hello from Azure CLI"'
+                 inlineScript: |
+                      echo "Azure CLI Task Running..."
+                      az account show
 
 
          - script: |
