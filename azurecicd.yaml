@@ -34,8 +34,8 @@ stages:
          - script: |
               terraform fmt
               terraform validate
-              terrafrom plan 
-           displayName: 'Terraform Apply'
+              terraform plan 
+           displayName: 'Terraform Plan'
            workingDirectory: 'IAC_Terraform'
 
 
