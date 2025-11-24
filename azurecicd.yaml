@@ -12,7 +12,7 @@ variables:
   aksClusterName: 'tetris-aks-cluster'
   aksNodeCount: 3
   acrName: 'tetrisacr2024'
-  aksNodeSize: 'Standard_DS2_v2'
+  aksNodeSize: 'Standard_DS2_v3'
 
 stages:
   - stage: 'DeployInfrastructure'
