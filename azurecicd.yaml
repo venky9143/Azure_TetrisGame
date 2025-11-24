@@ -151,3 +151,66 @@ stages:
               DOCKERHUBUSERNAME: $(DOCKERHUBUSERNAME)
               DOCKERHUBPASSWORD: $(DOCKERHUBPASSWORD)
 
+  - stage: 'DeployToAKS'
+    displayName: 'Deploy image to AKS'
+    dependsOn: 'DockerImagePullandPush'
+
+    jobs:
+    - job: 'DeployJob'
+      displayName: 'kubectl deploy to AKS'
+      workspace:
+        clean: all
+
+      steps:
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download Terraform outputs'
+        inputs:
+          artifact: 'tfoutputs'
+          path: '$(Pipeline.Workspace)/tfoutputs'
+
+      - script: |
+          set -euo pipefail
+          ACR_LOGIN_SERVER=$(cat $(Pipeline.Workspace)/tfoutputs/acr_login_server.txt)
+          AKS_NAME=$(cat $(Pipeline.Workspace)/tfoutputs/aks_name.txt)
+          RG_NAME=$(cat $(Pipeline.Workspace)/tfoutputs/resource_group.txt)
+
+          echo "##vso[task.setvariable variable=acr_login_server]$ACR_LOGIN_SERVER"
+          echo "##vso[task.setvariable variable=aks_name]$AKS_NAME"
+          echo "##vso[task.setvariable variable=rg_name]$RG_NAME"
+        displayName: 'Set variables from Terraform'
+
+      - task: AzureCLI@2
+        displayName: 'Deploy manifest to AKS'
+        inputs:
+          azureSubscription: 'Azure-Tetris-ServiceConnection'
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            set -euo pipefail
+
+            echo "Getting AKS credentials..."
+            az aks get-credentials \
+              --name "$(aks_name)" \
+              --resource-group "$(rg_name)" \
+              --overwrite-existing
+
+            kubectl create namespace tetris || true
+            kubectl config set-context --current --namespace=tetris
+
+            echo "Replacing IMAGE_PLACEHOLDER with: $(acr_login_server)/$(imageName):latest"
+            sed -i "s|IMAGE_PLACEHOLDER|$(acr_login_server)/$(imageName):latest|g" k8s/tetris-deployment.yaml
+
+            echo "Applying Deployment..."
+            kubectl apply -f k8s/tetris-deployment.yaml
+
+            echo "Applying Service..."
+            kubectl apply -f k8s/tetris-service.yaml
+
+            echo "Waiting for rollout..."
+            kubectl rollout status deployment/tetris-deployment --timeout=180s
+
+            echo "Showing Services..."
+            kubectl get svc -n tetris
+
+
+

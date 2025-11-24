@@ -16,6 +16,7 @@ spec:
     spec:
       containers:
       - name: tetris
-        image: venkateshkesa/tetris:latest
+        image: IMAGE_PLACEHOLDER   # pipeline replaces this dynamically
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
