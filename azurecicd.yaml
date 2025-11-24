@@ -53,4 +53,4 @@ stages:
               terraform fmt
               terraform validate
               terraform plan
-              terraform apply -y 
+              terraform apply  -auto-approve  
