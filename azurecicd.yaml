@@ -62,7 +62,7 @@ stages:
           - script: |
               echo "Pulling image from DockerHub..."
               docker login -u $(DOCKERHUBUSERNAME) -p $(DOCKERHUBPASSWORD)
-              docker pull $(DOCKERHUBUSERNAME/tetris:latest
+              docker pull $(DOCKERHUBUSERNAME)/tetris:latest
               docker images
               echo "Image pulled successfully."
 
