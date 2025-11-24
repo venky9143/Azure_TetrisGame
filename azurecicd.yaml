@@ -198,13 +198,13 @@ stages:
             kubectl config set-context --current --namespace=tetris
 
             echo "Replacing IMAGE_PLACEHOLDER with: $(acr_login_server)/$(imageName):latest"
-            sed -i "s|IMAGE_PLACEHOLDER|$(acr_login_server)/$(imageName):latest|g" k8s/tetris-deployment.yaml
+            sed -i "s|IMAGE_PLACEHOLDER|$(acr_login_server)/$(imageName):latest|g" manifestfiles/tetrisDeployment.yaml
 
             echo "Applying Deployment..."
-            kubectl apply -f k8s/tetris-deployment.yaml
+            kubectl apply -f manifestfiles/tetrisDeployment.yaml
 
             echo "Applying Service..."
-            kubectl apply -f k8s/tetris-service.yaml
+            kubectl apply -f manifestfiles/tetrisService.yaml
 
             echo "Waiting for rollout..."
             kubectl rollout status deployment/tetris-deployment --timeout=180s
