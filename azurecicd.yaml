@@ -1,17 +1,18 @@
-triggers:
+trigger:
   branches:
     include:
       - main
+
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  dockerHubUsername: 'your_dockerhub_username'
-  dockerHubPassword: 'your_dockerhub_password'
+  # keep defaults here; terraform outputs will override these at runtime
   aksClusterName: 'tetris-aks-cluster'
   aksNodeCount: 3
-  acrName: 'tetrisacr2024'
-  aksNodeSize: 'Standard_DS2_v2'
+  aksNodeSize: 'Standard_DS2_v3'
+  imageName: 'tetris'                       # used for tagging
+  # acrName is intentionally not hard-coded here; terraform will produce it
 
 stages:
   - stage: 'DeployInfrastructure'
@@ -19,54 +20,134 @@ stages:
     jobs:
       - job: 'TerraformJob'
         displayName: 'Terraform Apply'
+        workspace:
+          clean: all
         steps:
-          - task: TerraformInstaller@1
+          - script: |
+              set -euo pipefail
+              echo "Installing Terraform 1.6.0..."
+              curl -L -o terraform.zip https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
+              unzip -o terraform.zip
+              sudo mv terraform /usr/local/bin/
+              terraform --version
             displayName: 'Install Terraform'
+
+          - task: AzureCLI@2
+            displayName: 'Terraform init/plan/apply (Azure CLI service connection)'
             inputs:
-              terraformVersion: '1.5.7'
+              azureSubscription: 'Azure-Tetris-ServiceConnection'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                echo "Setting ARM env vars from Azure CLI context (if using SP, pipeline service connection handles auth)..."
+                export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                export ARM_TENANT_ID=$(az account show --query tenantId -o tsv)
 
-          - script: |
-              terraform init
-            displayName: 'Terraform Init'
-            workingDirectory: 'IAC_Terraform'
+                # If you are using a Service Principal via variables you may export them here (optional)
+                # export ARM_CLIENT_ID=$servicePrincipalId
+                # export ARM_CLIENT_SECRET=$servicePrincipalKey
 
-          - script: |
-              terraform apply -auto-approve -var="cluster_name=$(aksClusterName)" -var="node_count=$(aksNodeCount)" -var="acr_name=$(acrName)" -var="node_size=$(aksNodeSize)"
-            displayName: 'Terraform Apply'
-            workingDirectory: 'IAC_Terraform'
-  - stage: 'pull the image'
-    displayName: 'Pull the image from DockerHub'
+                cd IAC_Terraform
+
+                echo "Terraform init..."
+                terraform init -input=false
+
+                echo "Terraform validate & fmt..."
+                terraform fmt -check || terraform fmt
+                terraform validate
+
+                echo "Terraform plan..."
+                terraform plan -out=tfplan
+
+                echo "Terraform apply..."
+                terraform apply -auto-approve tfplan
+
+                echo "Writing terraform outputs to files..."
+                mkdir -p $(Pipeline.Workspace)/tfoutputs
+                terraform output -raw acr_name > $(Pipeline.Workspace)/tfoutputs/acr_name.txt || echo "" > $(Pipeline.Workspace)/tfoutputs/acr_name.txt
+                terraform output -raw acr_login_server > $(Pipeline.Workspace)/tfoutputs/acr_login_server.txt || echo "" > $(Pipeline.Workspace)/tfoutputs/acr_login_server.txt
+                terraform output -raw aks_name > $(Pipeline.Workspace)/tfoutputs/aks_name.txt || terraform output -raw aks_cluster_name > $(Pipeline.Workspace)/tfoutputs/aks_name.txt || echo "" > $(Pipeline.Workspace)/tfoutputs/aks_name.txt
+                terraform output -raw resource_group > $(Pipeline.Workspace)/tfoutputs/resource_group.txt || terraform output -raw rg_name > $(Pipeline.Workspace)/tfoutputs/resource_group.txt || echo "" > $(Pipeline.Workspace)/tfoutputs/resource_group.txt
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Terraform outputs artifact'
+            inputs:
+              targetPath: '$(Pipeline.Workspace)/tfoutputs'
+              artifact: 'tfoutputs'
+
+  - stage: 'DockerImagePullandPush'
+    displayName: 'Pull/Build image and push to ACR'
     dependsOn: 'DeployInfrastructure'
     jobs:
-      - job: 'PullImageJob'
-        displayName: 'Pull Image from DockerHub'
+      - job: 'PushToAcr'
+        displayName: 'Docker Pull/Build & Push'
+        workspace:
+          clean: all
         steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Terraform outputs'
+            inputs:
+              artifact: 'tfoutputs'
+              path: '$(Pipeline.Workspace)/tfoutputs'
+
           - script: |
-              echo "Pulling image from DockerHub..."
-              docker login -u $(dockerHubUsername) -p $(dockerHubPassword)
-              docker pull $(dockerHubUsername)/tetris:latest
-              docker images
-              echo "Image pulled successfully."
+              set -euo pipefail
+              echo "Reading TF outputs..."
+              ACR_NAME=$(cat $(Pipeline.Workspace)/tfoutputs/acr_name.txt)
+              ACR_LOGIN_SERVER=$(cat $(Pipeline.Workspace)/tfoutputs/acr_login_server.txt)
+              AKS_NAME=$(cat $(Pipeline.Workspace)/tfoutputs/aks_name.txt)
+              RG_NAME=$(cat $(Pipeline.Workspace)/tfoutputs/resource_group.txt)
 
-              echo Tagging and pushing to Azure Container Registry...
-              az acr login --name $(acrName)
-              docker tag $(dockerHubUsername)/tetris:latest $(acrName).azurecr.io/tetris:latest
-              docker push $(acrName).azurecr.io/tetris:latest
-            displayName: 'Pull Image'
-  - stage: 'Deploy to AKS'
-    displayName: 'Deploy Application to AKS'
-    dependsOn: 'pull the image'
-    jobs:
-      - job: 'DeployToAKSJob'
-        displayName: 'Deploy to AKS'
-        steps:
-          - script: |
-              echo "Getting AKS credentials..."
-              az aks get-credentials --resource-group tetris-rg --name $(aksClusterName)
+              if [ -z "${ACR_NAME}" ] || [ -z "${ACR_LOGIN_SERVER}" ]; then
+                echo "ERROR: Terraform did not produce acr_name or acr_login_server. Check Terraform outputs."
+                exit 1
+              fi
 
-              echo "Deploying application to AKS..."
-              kubectl apply -f k8s/deployment.yaml
-              kubectl apply -f k8s/service.yaml
+              echo "##vso[task.setvariable variable=acr_name]$ACR_NAME"
+              echo "##vso[task.setvariable variable=acr_login_server]$ACR_LOGIN_SERVER"
+              echo "##vso[task.setvariable variable=aks_name]$AKS_NAME"
+              echo "##vso[task.setvariable variable=rg_name]$RG_NAME"
 
-              echo "Deployment completed."
-            displayName: 'Deploy to AKS'
+              echo "ACR: $ACR_NAME"
+              echo "ACR login server: $ACR_LOGIN_SERVER"
+            displayName: 'Set pipeline variables from Terraform outputs'
+
+          - task: AzureCLI@2
+            displayName: 'Pull (or build) image & push to ACR'
+            inputs:
+              azureSubscription: 'Azure-Tetris-ServiceConnection'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+
+                echo "Ensure TF outputs are available as variables..."
+                echo "acr_name = $(acr_name)"
+                echo "acr_login_server = $(acr_login_server)"
+
+                echo "DockerHub login (secure)..."
+                echo "$(DOCKERHUBPASSWORD)" | docker login -u "$(DOCKERHUBUSERNAME)" --password-stdin
+
+                # Option A: If you want to pull prebuilt image from DockerHub
+                echo "Pulling image from DockerHub..."
+                docker pull $(DOCKERHUBUSERNAME)/$(imageName):latest
+
+                # Option B: (alternative) Build from current repo (uncomment if needed)
+                # echo "Building Docker image..."
+                # docker build -t $(imageName):latest .
+
+                echo "Login to ACR using az cli..."
+                az acr login --name $(acr_name)
+
+                echo "Tagging image for ACR..."
+                docker tag $(DOCKERHUBUSERNAME)/$(imageName):latest $(acr_login_server)/$(imageName):latest
+
+                echo "Pushing image to ACR..."
+                docker push $(acr_login_server)/$(imageName):latest
+
+                echo "Image pushed: $(acr_login_server)/$(imageName):latest"
+            env:
+              DOCKERHUBUSERNAME: $(DOCKERHUBUSERNAME)
+              DOCKERHUBPASSWORD: $(DOCKERHUBPASSWORD)
+

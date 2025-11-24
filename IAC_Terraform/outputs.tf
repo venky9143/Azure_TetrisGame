@@ -1,6 +1,5 @@
-output "rg" {
+output "resource_group" {
   value = module.rg.name
-
 }
 
 output "location" {
@@ -15,15 +14,23 @@ output "subnet_name" {
   value = module.subnet.name
 }
 
-output "subnet_address_prefixes" {
+output "subnet_id" {
   value = module.subnet.subnet_id
-
 }
-output "acr" {
+
+# MAIN ACR OUTPUTS USED BY PIPELINE
+output "acr_name" {
   value = module.acr.name
 }
 
-output "aks" {
-  value = module.aks.name
+output "acr_login_server" {
+  value = module.acr.login_server
 }
 
+output "acr_id" {
+  value = module.acr.id
+}
+
+output "aks_name" {
+  value = module.aks.name
+}
