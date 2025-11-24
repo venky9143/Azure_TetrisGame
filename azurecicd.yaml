@@ -59,15 +59,23 @@ stages:
       - job: 'PullImageJob'
         displayName: 'Pull Image from DockerHub and push to ACR'
         steps:
-          - script: |
-              echo "Pulling image from DockerHub..."
-              docker login -u $(DOCKERHUBUSERNAME) -p $(DOCKERHUBPASSWORD)
-              docker pull $(DOCKERHUBUSERNAME)/tetris:latest
-              docker images
-              echo "Image pulled successfully."
+          - task: AzureCLI@2
+            inputs:
+             azureSubscription: 'Azure-Tetris-ServiceConnection' 
+             scriptType: bash        
+             scriptLocation: inlineScript
+             inlineScript: |
+               echo "Pulling image from DockerHub..."
+               echo "$(DOCKERHUBPASSWORD)" | docker login -u "$(DOCKERHUBUSERNAME)" --password-stdin
 
-              echo Tagging and pushing to Azure Container Registry...
-              az acr login --name $(acrName)
-              docker tag $(DOCKERHUBUSERNAME/tetris:latest $(acrName).azurecr.io/tetris:latest
-              docker push $(acrName).azurecr.io/tetris:latest
-            displayName: 'Pull Image'
+               docker pull $(DOCKERHUBUSERNAME)/tetris:latest
+               docker images
+               echo "Image pulled successfully."
+
+               echo "Tagging and pushing to Azure Container Registry..."
+               az acr login --name $(acrName)
+
+               docker tag $(DOCKERHUBUSERNAME)/tetris:latest $(acrName).azurecr.io/tetris:latest
+               docker push $(acrName).azurecr.io/tetris:latest
+
+               echo "Image pushed successfully.
