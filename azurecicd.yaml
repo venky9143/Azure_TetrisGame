@@ -7,11 +7,9 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  dockerHubUsername: 'your_dockerhub_username'
-  dockerHubPassword: 'your_dockerhub_password'
   aksClusterName: 'tetris-aks-cluster'
   aksNodeCount: 3
-  acrName: 'tetrisacr2024'
+  acrName: 'tetris2024'
   aksNodeSize: 'Standard_DS2_v3'
 
 stages:
@@ -54,3 +52,22 @@ stages:
               terraform validate
               terraform plan
               terraform apply  -auto-approve  
+  - stage: 'DockerImagePullandPush'
+    displayName: 'Pull the image from DockerHub'
+    dependsOn: 'DeployInfrastructure'
+    jobs:
+      - job: 'PullImageJob'
+        displayName: 'Pull Image from DockerHub and push to ACR'
+        steps:
+          - script: |
+              echo "Pulling image from DockerHub..."
+              docker login -u $(DOCKERHUBUSERNAME) -p $(DOCKERHUBPASSWORD)
+              docker pull $(DOCKERHUBUSERNAME/tetris:latest
+              docker images
+              echo "Image pulled successfully."
+
+              echo Tagging and pushing to Azure Container Registry...
+              az acr login --name $(acrName)
+              docker tag $(DOCKERHUBUSERNAME/tetris:latest $(acrName).azurecr.io/tetris:latest
+              docker push $(acrName).azurecr.io/tetris:latest
+            displayName: 'Pull Image'
