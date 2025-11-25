@@ -30,10 +30,10 @@ module "log_analytics" {
 }
 
 module "acr" {
-  source         = "./modules/acr"
-  prefix         = var.prefix
-  location       = module.rg.location
-  rg_name        = module.rg.name
+  source   = "./modules/acr"
+  prefix   = var.prefix
+  location = module.rg.location
+  rg_name  = module.rg.name
 }
 
 module "aks" {
@@ -41,5 +41,5 @@ module "aks" {
   cluster_name = var.cluster_name
   location     = module.rg.location
   rg_name      = module.rg.name
-
+  acr_id       = module.acr.id
 }
