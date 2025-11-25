@@ -35,7 +35,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Terraform init/plan/apply (Azure CLI service connection)'
             inputs:
-              azureSubscription: 'Azure-Tetris-ServiceConnection'
+              azureSubscription: 'sc-azure-demo'
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
@@ -116,7 +116,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Pull (or build) image & push to ACR'
             inputs:
-              azureSubscription: 'Azure-Tetris-ServiceConnection'
+              azureSubscription: 'sc-azure-demo'
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
@@ -152,7 +152,7 @@ stages:
               DOCKERHUBPASSWORD: $(DOCKERHUBPASSWORD)
           - task: AzureCLI@2
             inputs:
-              azureSubscription: 'Azure-Tetris-ServiceConnection'
+              azureSubscription: 'sc-azure-demo'
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
@@ -190,7 +190,7 @@ stages:
       - task: AzureCLI@2
         displayName: 'Deploy manifest to AKS'
         inputs:
-          azureSubscription: 'Azure-Tetris-ServiceConnection'
+          azureSubscription: 'sc-azure-demo'
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |
