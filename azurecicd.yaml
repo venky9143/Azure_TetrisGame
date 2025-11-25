@@ -150,6 +150,14 @@ stages:
             env:
               DOCKERHUBUSERNAME: $(DOCKERHUBUSERNAME)
               DOCKERHUBPASSWORD: $(DOCKERHUBPASSWORD)
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: 'Azure-Tetris-ServiceConnection'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Attaching ACR to AKS..."
+                az aks update -n $(aks_name) -g $(rg_name) --attach-acr $(acr_name)
 
   - stage: 'DeployToAKS'
     displayName: 'Deploy image to AKS'
