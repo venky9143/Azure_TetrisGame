@@ -41,5 +41,4 @@ module "aks" {
   cluster_name = var.cluster_name
   location     = module.rg.location
   rg_name      = module.rg.name
-  acr_id       = module.acr.id
 }

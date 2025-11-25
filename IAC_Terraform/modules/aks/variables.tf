@@ -14,7 +14,3 @@ variable "rg_name" {
     type        = string
 }
 
-variable "acr_id" {
-    description = "The ID of the Azure Container Registry (ACR) to grant pull access to the AKS cluster"
-    type        = string
-}
