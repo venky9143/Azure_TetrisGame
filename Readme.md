@@ -18,7 +18,7 @@ Azure DevOps Pipelines (YAML)
 
 Azure Kubernetes Service (AKS)
 
-ACR + Docker Images
+ACR + Docker Images.
 
 Workload Identity Federation (no secrets!)
 
