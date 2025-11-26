@@ -22,7 +22,7 @@ jobs:
 
       - 
         name: Listing Docker Images
-        run: docker images
+        run: sudo docker images
         
 
        
