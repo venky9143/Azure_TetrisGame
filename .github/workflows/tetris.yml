@@ -6,7 +6,7 @@ on:
 
 jobs:
   docker_login:
-    runs-on: tetris-linux-runner
+    runs-on: self-hosted
     steps:
       -
         name: Login to Docker Hub
