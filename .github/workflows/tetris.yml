@@ -40,3 +40,16 @@ jobs:
           fi
           echo "displaying the docker images"
           docker images
+
+  azure_login:
+    runs-on: self-hosted
+    needs: docker_login
+    steps:
+      -
+        name: Login to Azure
+        uses: azure/login@v1
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Verifying Login
+        runs: echo "Login Is sucessful"
