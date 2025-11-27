@@ -25,9 +25,9 @@ jobs:
       - 
         name: Listing Docker Images
         run: sudo docker images
-      - 
+      -
        name: Pull the Docker image
-       run: docker pull venkateshkesa/tetris:latest 
+       run: sudo docker pull venkateshkesa/tetris:latest 
 
 
        
