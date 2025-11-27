@@ -122,6 +122,10 @@ jobs:
         kubectl apply -f manifestfiles/tetrisDeployment.yaml
         kubectl apply -f manifestfiles/tetrisService.yaml
 
+    - name: Restart Deployment to Pull Latest ACR Image
+      run: |
+       kubectl rollout restart deployment tetris-deployment
+
     - name: Verify Deployment
       run: |
         kubectl get pods
