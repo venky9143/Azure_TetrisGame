@@ -20,11 +20,16 @@ jobs:
 
       - 
         name: Listing Docker Images
-        run: docker images
+        run: |
+           echo "Docker images list"
+           docker images
         
       - 
         name: check the images and pull if not present !!!!
         run: |
+
+          echo " Checcking for Docker images pull the image if it's not present"
+          
           IMAGE_NAME="venkateshkesa/tetris:latest"
 
           if docker images | grep -q "${IMAGE_NAME}"; then
@@ -33,3 +38,5 @@ jobs:
             echo "Image ${IMAGE_NAME} is not present. Pulling the image..."
             docker pull ${IMAGE_NAME}
           fi
+          echo "displaying the docker images"
+          docker images
