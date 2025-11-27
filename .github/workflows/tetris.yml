@@ -61,11 +61,8 @@ jobs:
       - name: Verifying Login
         run: echo "Login Is sucessful"
 
-      - name: Azure CLI script
-        uses: azure/CLI@v2
-        with:
-          azcliversion: latest
-          inlineScript: |
-            echo "displaying Account Details "
-            az account show 
+      - name: Verify Azure Login & Subscription
+        run: |
+         echo "✅ Logged into Azure"
+         az account show
 
