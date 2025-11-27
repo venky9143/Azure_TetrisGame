@@ -25,20 +25,6 @@ jobs:
       - 
         name: Listing Docker Images
         run: sudo docker images
-  azure_login:
-    runs-on: self-hosted
-    needs: docker_login
-    steps:
-      -
-        name: Login to Azure
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - 
-        name: Verifying Login
-        run: echo "Login Is sucessful"
 
 
 
