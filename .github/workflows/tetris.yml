@@ -62,4 +62,15 @@ jobs:
         run: |
          echo "Login Is sucessful"
          az account show 
+
+  azure_acr_login:
+    runs-on: self-hosted
+    needs: azure_login
+    steps:
+      - 
+        name: Acr Login
+        run: |
+          echo "logining to Azure Acr"
+          az acr login --name tetrisacr
+          echo " Login Sucessfully 
             
