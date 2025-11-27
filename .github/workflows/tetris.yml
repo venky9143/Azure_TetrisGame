@@ -79,7 +79,7 @@ jobs:
         run: |
           echo "logining to Azure Acr"
           az acr login --name tetrisacr
-          echo " Login Sucessfully
+          echo " Login Sucessfully "
 
       - 
         name: Acr list
