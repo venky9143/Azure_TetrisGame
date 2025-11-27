@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: tetris
-        image: IMAGE_PLACEHOLDER   # pipeline replaces this dynamically
-        imagePullPolicy: IfNotPresent
+        image: tetrisacr.azurecr.io/tetris:latest  # pipeline replaces this dynamically
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
