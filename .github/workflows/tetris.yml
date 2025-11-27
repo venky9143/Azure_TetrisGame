@@ -85,6 +85,6 @@ jobs:
         name: Acr list
         run: |
           echo " Displaying the Azure Container List"
-           az acr connected-registry list --registry $REGISTRY_NAME --output table
+           az acr repository list --name tetrisacr --output table
         
             
