@@ -59,10 +59,7 @@ jobs:
           auth-type: OIDC
 
       - name: Verifying Login
-        run: echo "Login Is sucessful"
-
-      - name: Verify Azure Login & Subscription
         run: |
-         echo "✅ Logged into Azure"
-         az account show
-
+         echo "Login Is sucessful"
+         az account show 
+            
