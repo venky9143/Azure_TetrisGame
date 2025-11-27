@@ -27,7 +27,7 @@ jobs:
         run: |
           IMAGE_NAME="venkateshkesa/tetris:latest"
 
-          if docker images | grep -q "${IMAGE_NAME}"; then
+          if sudo docker images | grep -q "${IMAGE_NAME}"; then
             echo "Image ${IMAGE_NAME} is already present."
           else
             echo "Image ${IMAGE_NAME} is not present. Pulling the image..."
