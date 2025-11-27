@@ -81,10 +81,18 @@ jobs:
           az acr login --name tetrisacr
           echo " Login Sucessfully "
 
+      - name: Tag Docker Image for ACR
+        run: |
+         docker tag venkateshkesa/tetris:latest tetrisacr.azurecr.io/tetris:latest
+
+      - name: Push Image to ACR
+        run: |
+         docker push tetrisacr.azurecr.io/tetris:latest
       - 
         name: Acr list
         run: |
           echo " Displaying the Azure Container List"
           az acr repository list --name tetrisacr --output table
+
         
             
