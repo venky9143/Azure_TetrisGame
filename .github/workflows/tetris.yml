@@ -20,14 +20,14 @@ jobs:
 
       - 
         name: Listing Docker Images
-        run: sudo docker images
+        run: docker images
         
       - 
         name: check the images and pull if not present
         run: |
           IMAGE_NAME="venkateshkesa/tetris:latest"
 
-          if sudo docker images | grep -q "${IMAGE_NAME}"; then
+          if docker images | grep -q "${IMAGE_NAME}"; then
             echo "Image ${IMAGE_NAME} is already present."
           else
             echo "Image ${IMAGE_NAME} is not present. Pulling the image..."
