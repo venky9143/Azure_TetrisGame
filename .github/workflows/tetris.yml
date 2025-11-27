@@ -1,12 +1,8 @@
-name: ci
+name: Tetris-Gane CICD
 
 on:
   push:
     branches: main
-
-permissions:
-  id-token: write
-  contents: read
 
 jobs:
   docker_login:
@@ -25,9 +21,15 @@ jobs:
       - 
         name: Listing Docker Images
         run: sudo docker images
-      -
-       name: Pull the Docker image
-       run: sudo docker pull venkateshkesa/tetris:latest 
+        
+      - 
+        name: check the images and pull if not present
+        run: |
+          IMAGE_NAME= "venkateshkesa/tetris:latest"
 
-
-       
+          if docker images | grep -q "${IMAGE_NAME}"; then
+            echo "Image ${IMAGE_NAME} is already present."
+          else
+            echo "Image ${IMAGE_NAME} is not present. Pulling the image..."
+            docker pull ${IMAGE_NAME}
+          fi
