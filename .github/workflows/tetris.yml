@@ -25,7 +25,7 @@ jobs:
       - 
         name: check the images and pull if not present
         run: |
-          IMAGE_NAME= "venkateshkesa/tetris:latest"
+          IMAGE_NAME="venkateshkesa/tetris:latest"
 
           if docker images | grep -q "${IMAGE_NAME}"; then
             echo "Image ${IMAGE_NAME} is already present."
