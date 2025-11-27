@@ -67,10 +67,24 @@ jobs:
     runs-on: self-hosted
     needs: azure_login
     steps:
-      - 
+      -
+         name: Login to Azure
+         uses: azure/login@v1
+         with:
+             client-id: ${{ secrets.AZURE_CLIENT_ID }}
+             tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+             subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      -     
         name: Acr Login
         run: |
           echo "logining to Azure Acr"
           az acr login --name tetrisacr
-          echo " Login Sucessfully 
+          echo " Login Sucessfully
+
+      - 
+        name: Acr list
+        run: |
+          echo " Displaying the Azure Container List"
+           az acr connected-registry list --registry $REGISTRY_NAME --output table
+        
             
